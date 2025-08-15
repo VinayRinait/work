@@ -6,6 +6,8 @@ from .config import CONFIG
 from .selector import select_best_strategy
 from .analysis import compute_indicators, recommend_action
 from .storage import get_conn
+from .data_collect import collect_prices
+from .data_providers import resolve_symbol
 
 
 def load_df_for(ticker: str) -> pd.DataFrame:
@@ -20,11 +22,18 @@ def load_df_for(ticker: str) -> pd.DataFrame:
 
 
 def analyze_ticker(ticker: str) -> Dict[str, Any]:
-	df = load_df_for(ticker)
+	resolved = resolve_symbol(ticker) or ticker
+	df = load_df_for(resolved)
 	if df.empty or len(df) < 200:
-		return {"ticker": ticker, "error": "Not enough data"}
+		# try fetching fresh data for the resolved symbol
+		try:
+			collect_prices([resolved], days=400)
+		except Exception:
+			pass
+		df = load_df_for(resolved)
+	if df.empty or len(df) < 200:
+		return {"ticker": resolved, "error": "Not enough data"}
 	ind = compute_indicators(df)
-	# use selector to decide which strategy is best recently
 	best = select_best_strategy({"bias": 1.0}, df)
 	strategy_key = None
 	if best is not None:
@@ -40,7 +49,7 @@ def analyze_ticker(ticker: str) -> Dict[str, Any]:
 		strategy_key = "sma_cross"
 	action, reason, snapshot, confidence = recommend_action(strategy_key, ind)
 	return {
-		"ticker": ticker,
+		"ticker": resolved,
 		"strategy": strategy_key,
 		"action": action,
 		"reason": reason,

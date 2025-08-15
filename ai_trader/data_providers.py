@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Protocol, List
+from typing import Protocol, List, Optional
 import pandas as pd
 import requests
 import yfinance as yf
@@ -54,3 +54,40 @@ def fetch_with_fallback(ticker: str, days: int) -> pd.DataFrame:
 		if not df.empty:
 			return df
 	return pd.DataFrame(columns=["ticker", "date", "open", "high", "low", "close", "volume"])  # noqa: E501
+
+
+# --- Symbol search/resolution (Yahoo) ---
+
+def search_symbol_yahoo(query: str, count: int = 5) -> List[dict]:
+	try:
+		resp = requests.get(
+			"https://query1.finance.yahoo.com/v1/finance/search",
+			params={"q": query, "quotesCount": count, "newsCount": 0},
+			timeout=10,
+		)
+		resp.raise_for_status()
+		data = resp.json()
+		return data.get("quotes", [])
+	except Exception:
+		return []
+
+
+def resolve_symbol(query: str) -> Optional[str]:
+	# If user already passed a likely symbol, try it first
+	q = query.strip().upper()
+	if "." in q:
+		return q
+	# Prefer NSE symbols
+	quotes = search_symbol_yahoo(q)
+	for item in quotes:
+		symbol = item.get("symbol") or ""
+		exch = (item.get("exchDisp") or item.get("exchange") or "").upper()
+		if symbol.endswith(".NS") or exch.startswith("NS") or exch == "NSE":
+			return symbol if symbol.endswith(".NS") else f"{symbol}.NS"
+	# Fallback to first result
+	if quotes:
+		sym = quotes[0].get("symbol") or ""
+		if sym and not sym.endswith(".NS") and (quotes[0].get("exchDisp","")) == "NSE":
+			return f"{sym}.NS"
+		return sym or None
+	return None
