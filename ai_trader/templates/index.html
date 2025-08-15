@@ -7,19 +7,59 @@
 		<link rel="stylesheet" href="/static/styles.css" />
 	</head>
 	<body>
+		<nav class="topbar">
+			<div class="brand">AI Trader</div>
+			<div class="nav-links">
+				<a href="/">Home</a>
+				<a href="/analyze">Analyze</a>
+				<a href="/about">About</a>
+			</div>
+		</nav>
 		<header>
 			<h1>AI Trader Dashboard</h1>
-			<p>Signals and Strategy Evaluations</p>
+			<p>Signals, strategy evaluations, and swing-trade suggestions.</p>
 		</header>
 		<main>
 			<section>
-				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+				<div class="section-head">
+					<h2>Quick Analyze</h2>
+					<form method="get" action="/analyze" class="inline-form">
+						<input type="text" name="ticker" placeholder="Ticker (e.g., RELIANCE.NS)" />
+						<button type="submit">Analyze</button>
+					</form>
+				</div>
+			</section>
+
+			<section>
+				<h2>Suggestions (Swing)</h2>
+				<div class="card-grid">
+					{% for s in suggestions %}
+					<a class="card" href="/analyze?ticker={{ s.ticker }}">
+						<div class="card-title">
+							<span class="ticker">{{ s.ticker }}</span>
+							<span class="badge {{ s.action|lower }}">{{ s.action }}</span>
+						</div>
+						<div class="card-body">
+							<div class="row"><span>Strategy</span><span class="value">{{ s.strategy }}</span></div>
+							<div class="row"><span>Confidence</span><span class="value">{{ '%.1f'|format(s.confidence) }}%</span></div>
+							<div class="muted">{{ s.reason }}</div>
+						</div>
+					</a>
+					{% endfor %}
+				</div>
+			</section>
+
+			<section>
+				<div class="section-head">
 					<h2>Latest Signals</h2>
-					<div>
-						<a href="/analyze" style="padding:10px 14px;border-radius:8px;border:1px solid #1f2b55;background:#2b4ee8;color:#fff;text-decoration:none">Analyze a ticker</a>
+					<div class="btn-group">
+						<button class="chip" data-filter="all">All</button>
+						<button class="chip" data-filter="BUY">Buy</button>
+						<button class="chip" data-filter="SELL">Sell</button>
+						<button class="chip" data-filter="HOLD">Hold</button>
 					</div>
 				</div>
-				<table>
+				<table id="signals-table">
 					<thead>
 						<tr>
 							<th>As Of</th>
@@ -33,11 +73,11 @@
 					</thead>
 					<tbody>
 						{% for d in decisions %}
-						<tr>
+						<tr data-action="{{ d['action'] }}">
 							<td>{{ d["asof"] }}</td>
-							<td>{{ d["ticker"] }}</td>
+							<td><a href="/analyze?ticker={{ d['ticker'] }}">{{ d["ticker"] }}</a></td>
 							<td>{{ d["strategy"] }}</td>
-							<td>{{ d["action"] }}</td>
+							<td><span class="badge {{ d['action']|lower }}">{{ d["action"] }}</span></td>
 							<td>{{ '%.2f'|format(d["entry"]) if d["entry"] else '' }}</td>
 							<td>{{ '%.2f'|format(d["stop"]) if d["stop"] else '' }}</td>
 							<td>{{ '%.2f'|format(d["target"]) if d["target"] else '' }}</td>
@@ -46,31 +86,7 @@
 					</tbody>
 				</table>
 			</section>
-			<section>
-				<h2>Suggestions (Swing)</h2>
-				<table>
-					<thead>
-						<tr>
-							<th>Ticker</th>
-							<th>Action</th>
-							<th>Strategy</th>
-							<th>Confidence</th>
-							<th>Reason</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for s in suggestions %}
-						<tr>
-							<td>{{ s.ticker }}</td>
-							<td>{{ s.action }}</td>
-							<td>{{ s.strategy }}</td>
-							<td>{{ '%.1f'|format(s.confidence) }}%</td>
-							<td>{{ s.reason }}</td>
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			</section>
+
 			<section>
 				<h2>Recent Strategy Evaluations</h2>
 				<table>
@@ -87,7 +103,7 @@
 						{% for r in evals %}
 						<tr>
 							<td>{{ r["asof"] }}</td>
-							<td>{{ r["ticker"] }}</td>
+							<td><a href="/analyze?ticker={{ r['ticker'] }}">{{ r["ticker"] }}</a></td>
 							<td>{{ r["strategy"] }}</td>
 							<td>{{ '%.2f'|format(r["return_pct"]) }}</td>
 							<td>{{ '%.2f'|format(r["win_rate"]) }}</td>
@@ -100,5 +116,6 @@
 		<footer>
 			<p>Paper mode. No live orders are placed.</p>
 		</footer>
+		<script src="/static/app.js"></script>
 	</body>
 </html>

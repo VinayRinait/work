@@ -1,43 +1,64 @@
 # AI-Powered Trading Assistant (India)
 
-This project is a modular trading assistant for the Indian market. It:
+A modular swing-trading assistant for the Indian market. It:
 
-- Collects market and sentiment data
+- Collects end-of-day price data (free Yahoo Finance by default)
+- Computes sentiment (VADER, with optional PDF/news ingestion)
 - Backtests multiple strategies using `backtesting.py`
-- Learns which strategy to use given current conditions
-- Generates trade signals and can execute via Dhan (stubbed)
+- Learns which strategy fits current market conditions
+- Generates swing-trade suggestions and a dashboard to review signals
+
+## Features
+- Strategy pack: EMA Trend, SMA Crossover, RSI Mean Reversion, Donchian Breakout, MACD Trend
+- Selector chooses best strategy based on recent performance
+- Swing suggestion engine with SMA200 trend filter, RSI, MACD, Donchian
+- Dashboard (Flask): home with suggestions, signals, recent evals; analyze page to search by ticker
+- SQLite persistence for prices, sentiment, global indices, decisions, strategy evaluations
 
 ## Quickstart
 
-1. Create a Python 3.10+ environment
-2. Install dependencies:
-
+1. Python 3.10+
+2. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
-3. Create a `.env` file in the repo root:
-
+3. Create `.env` (see `.env.example`):
 ```ini
-TRADING_MODE=paper  # or live
+TRADING_MODE=paper
 DB_PATH=/workspace/trader.db
 DEFAULT_TICKERS=RELIANCE.NS,TCS.NS,HDFCBANK.NS
 DATA_PROVIDERS=YFINANCE
 ENABLE_EXECUTION=false
-DHAN_API_KEY=your_key_if_any
-DHAN_ACCESS_TOKEN=your_access_token_if_any
-DHAN_BASE_URL=https://api.dhan.co
-PERPLEXITY_API_KEY=optional
 ```
-
-4. Run a daily scan and signal generation:
-
+4. Populate data and generate signals
 ```bash
 python3 -m ai_trader.run_daily
 ```
+5. Start the dashboard
+```bash
+python3 -m ai_trader.web_app
+```
+Visit http://127.0.0.1:8000
 
-## Notes
-- Dhan execution is stubbed. Live trading requires implementing endpoints and credentials.
-- News/sentiment uses VADER. Perplexity/other news APIs are optional.
-- Global features: Dow Jones `^DJI`, USD/INR `INR=X`, Crude `CL=F` via Yahoo Finance.
-- Data is persisted to SQLite at `DB_PATH`.
+## Analyze a ticker
+Open http://127.0.0.1:8000/analyze?ticker=RELIANCE.NS to see:
+- BUY/SELL/HOLD suggestion
+- Strategy applied
+- Confidence and reason
+- Key indicators snapshot (close, SMA200, RSI, MACD)
+
+## Configuration
+- `DATA_PROVIDERS`: ordered list of providers (default `YFINANCE`). You can later add `DHAN` or other providers.
+- `ENABLE_EXECUTION=false`: dashboard is read-only; no orders are placed.
+- Global features fetched via Yahoo: `^DJI`, `INR=X`, `CL=F`.
+
+## Notes & Safety
+- Free sources may change or rate-limit; provider fallback is implemented.
+- Past performance does not guarantee future results. For research only.
+- Keep API keys secret. Rotate any keys shared publicly.
+
+## Roadmap
+- Add NSE/Breeze/EODHD providers
+- Intraday intervals and live charts
+- Model-based selector (meta-learning), position sizing & risk
+- Portfolio view and PnL tracking
