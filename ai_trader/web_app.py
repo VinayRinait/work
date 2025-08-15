@@ -19,6 +19,12 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 def index():
 	suggestions = []
 	recent_news = []
+	insights = {
+		"best_strategy": None,
+		"action_mix": {},
+		"avg_sentiment": None,
+		"globals": None,
+	}
 	with get_db_conn() as conn:
 		decisions = conn.execute(
 			"""
@@ -39,6 +45,43 @@ def index():
 			ORDER BY asof DESC LIMIT 15
 			"""
 		).fetchall()
+		# Insights
+		best = conn.execute(
+			"""
+			SELECT strategy, AVG(return_pct) avg_ret, AVG(win_rate) avg_wr
+			FROM strategy_evals
+			WHERE asof >= datetime('now','-30 day')
+			GROUP BY strategy
+			ORDER BY avg_ret DESC
+			LIMIT 1
+			"""
+		).fetchone()
+		if best:
+			insights["best_strategy"] = {"strategy": best["strategy"], "avg_ret": best["avg_ret"], "avg_wr": best["avg_wr"]}
+		actions = conn.execute(
+			"""
+			SELECT action, COUNT(*) cnt
+			FROM decisions
+			WHERE asof >= datetime('now','-7 day')
+			GROUP BY action
+			"""
+		).fetchall()
+		insights["action_mix"] = {row["action"]: row["cnt"] for row in actions}
+		avg_sent = conn.execute(
+			"""
+			SELECT AVG(score) avg_score FROM sentiment
+			WHERE asof >= datetime('now','-2 day')
+			"""
+		).fetchone()
+		if avg_sent and avg_sent["avg_score"] is not None:
+			insights["avg_sentiment"] = float(avg_sent["avg_score"])
+		g = conn.execute(
+			"""
+			SELECT asof, dji, usdinr, cl FROM global_indices ORDER BY asof DESC LIMIT 1
+			"""
+		).fetchone()
+		if g:
+			insights["globals"] = {"asof": g["asof"], "dji": g["dji"], "usdinr": g["usdinr"], "cl": g["cl"]}
 		for t in (CONFIG.default_tickers or [])[:5]:
 			try:
 				res = analyze_ticker(t)
@@ -46,7 +89,7 @@ def index():
 					suggestions.append(res)
 			except Exception:
 				continue
-	return render_template("index.html", decisions=decisions, evals=latest_evals, suggestions=suggestions, news=recent_news)
+	return render_template("index.html", decisions=decisions, evals=latest_evals, suggestions=suggestions, news=recent_news, insights=insights)
 
 
 @app.route("/analyze")

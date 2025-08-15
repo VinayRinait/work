@@ -28,6 +28,26 @@
 						<button type="submit">Analyze</button>
 					</form>
 				</div>
+				<div class="insights-grid">
+					<div class="insight-card">
+						<div class="title">Best Strategy (30d)</div>
+						<div class="value">{{ insights.best_strategy.strategy if insights.best_strategy else '—' }}</div>
+						<div class="muted">Avg Ret: {{ '%.1f'|format(insights.best_strategy.avg_ret) if insights.best_strategy else '—' }}% · Win: {{ '%.1f'|format(insights.best_strategy.avg_wr) if insights.best_strategy else '—' }}%</div>
+					</div>
+					<div class="insight-card">
+						<div class="title">Action Mix (7d)</div>
+						<div class="value">BUY {{ insights.action_mix.get('BUY', 0) }} · SELL {{ insights.action_mix.get('SELL', 0) }} · HOLD {{ insights.action_mix.get('HOLD', 0) }}</div>
+					</div>
+					<div class="insight-card">
+						<div class="title">Avg Sentiment (2d)</div>
+						<div class="value">{{ '%.2f'|format(insights.avg_sentiment) if insights.avg_sentiment is not none else '—' }}</div>
+					</div>
+					<div class="insight-card">
+						<div class="title">Global</div>
+						<div class="muted">as of {{ insights.globals.asof if insights.globals else '' }}</div>
+						<div class="value">DJI {{ '%.0f'|format(insights.globals.dji) if insights.globals else '—' }} · USD/INR {{ '%.2f'|format(insights.globals.usdinr) if insights.globals else '—' }} · CL {{ '%.2f'|format(insights.globals.cl) if insights.globals else '—' }}</div>
+					</div>
+				</div>
 			</section>
 
 			<section>
