@@ -98,11 +98,25 @@ def resolve_symbol(query: str) -> Optional[str]:
 	# If typed a symbol w/ suffix
 	if "." in q:
 		return q.upper()
+	# Manual aliases for frequent NSE names
+	aliases = {
+		"bank of maharashtra": "MAHABANK.NS",
+		"state bank of india": "SBIN.NS",
+		"hdfc bank": "HDFCBANK.NS",
+		"icici bank": "ICICIBANK.NS",
+		"axis bank": "AXISBANK.NS",
+		"kotak bank": "KOTAKBANK.NS",
+		"bank of baroda": "BANKBARODA.NS",
+		"punjab national bank": "PNB.NS",
+	}
+	low = q.lower()
+	if low in aliases:
+		return aliases[low]
 	# Try full query first
 	quotes = search_symbol_yahoo(q)
-	# If failed, try without common stopwords and join
+	# If failed, try without common stopwords and join (keep sector words like bank)
 	if not quotes:
-		stop = {"of", "the", "ltd", "limited", "company", "bank"}
+		stop = {"of", "the", "ltd", "limited", "company", "co"}
 		parts = [p for p in q.split() if p.lower() not in stop]
 		alt = " ".join(parts) if parts else q
 		quotes = search_symbol_yahoo(alt)
