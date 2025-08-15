@@ -33,7 +33,7 @@ PERPLEXITY_API_KEY=optional
 4. Run a daily scan and signal generation:
 
 ```bash
-python -m ai_trader.run_daily
+python3 -m ai_trader.run_daily
 ```
 
 ## Notes

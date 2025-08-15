@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>AI Trader Dashboard</title>
+		<link rel="stylesheet" href="/static/styles.css" />
+	</head>
+	<body>
+		<header>
+			<h1>AI Trader Dashboard</h1>
+			<p>Signals and Strategy Evaluations</p>
+		</header>
+		<main>
+			<section>
+				<h2>Latest Signals</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>As Of</th>
+							<th>Ticker</th>
+							<th>Strategy</th>
+							<th>Action</th>
+							<th>Entry</th>
+							<th>Stop</th>
+							<th>Target</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for d in decisions %}
+						<tr>
+							<td>{{ d["asof"] }}</td>
+							<td>{{ d["ticker"] }}</td>
+							<td>{{ d["strategy"] }}</td>
+							<td>{{ d["action"] }}</td>
+							<td>{{ '%.2f'|format(d["entry"]) if d["entry"] else '' }}</td>
+							<td>{{ '%.2f'|format(d["stop"]) if d["stop"] else '' }}</td>
+							<td>{{ '%.2f'|format(d["target"]) if d["target"] else '' }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</section>
+			<section>
+				<h2>Recent Strategy Evaluations</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>As Of</th>
+							<th>Ticker</th>
+							<th>Strategy</th>
+							<th>Return %</th>
+							<th>Win Rate %</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for r in evals %}
+						<tr>
+							<td>{{ r["asof"] }}</td>
+							<td>{{ r["ticker"] }}</td>
+							<td>{{ r["strategy"] }}</td>
+							<td>{{ '%.2f'|format(r["return_pct"]) }}</td>
+							<td>{{ '%.2f'|format(r["win_rate"]) }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</section>
+		</main>
+		<footer>
+			<p>Paper mode. No live orders are placed.</p>
+		</footer>
+	</body>
+</html>
