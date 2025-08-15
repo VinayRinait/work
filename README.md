@@ -22,8 +22,11 @@ pip install -r requirements.txt
 TRADING_MODE=paper  # or live
 DB_PATH=/workspace/trader.db
 DEFAULT_TICKERS=RELIANCE.NS,TCS.NS,HDFCBANK.NS
+DATA_PROVIDERS=YFINANCE
+ENABLE_EXECUTION=false
 DHAN_API_KEY=your_key_if_any
 DHAN_ACCESS_TOKEN=your_access_token_if_any
+DHAN_BASE_URL=https://api.dhan.co
 PERPLEXITY_API_KEY=optional
 ```
 

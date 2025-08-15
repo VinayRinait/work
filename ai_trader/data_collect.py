@@ -6,6 +6,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from pypdf import PdfReader
 from .config import CONFIG
 from .storage import upsert_price_bars, upsert_sentiment, upsert_global
+from .data_providers import fetch_with_fallback
 
 
 _analyzer = SentimentIntensityAnalyzer()
@@ -26,7 +27,7 @@ def fetch_price_history(ticker: str, days: int = 365) -> pd.DataFrame:
 def collect_prices(tickers: List[str], days: int = 365) -> None:
 	rows = []
 	for t in tickers:
-		df = fetch_price_history(t, days)
+		df = fetch_with_fallback(t, days)
 		if not df.empty:
 			rows.extend(df.itertuples(index=False, name=None))
 	if rows:
