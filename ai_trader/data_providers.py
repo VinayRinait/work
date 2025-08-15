@@ -5,6 +5,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 from .config import CONFIG
+from .dhan_client import DhanClient
 
 
 class PriceProvider(Protocol):
@@ -29,9 +30,26 @@ class DhanProvider:
 	headers: dict
 
 	def fetch_daily_ohlc(self, ticker: str, days: int) -> pd.DataFrame:
-		# NOTE: Replace with actual Dhan market data endpoint if available
-		# Placeholder returns empty frame to not block flow
-		return pd.DataFrame(columns=["ticker", "date", "open", "high", "low", "close", "volume"])  # noqa: E501
+		client = DhanClient()
+		q = client.get_quote(ticker)
+		if not q:
+			return pd.DataFrame(columns=["ticker", "date", "open", "high", "low", "close", "volume"])  # noqa: E501
+		# Dhan quote fields vary; try to map close/ltp
+		close = q.get("close") or q.get("closePrice") or q.get("prevClose") or q.get("lastPrice") or q.get("ltp")
+		if close is None:
+			return pd.DataFrame(columns=["ticker", "date", "open", "high", "low", "close", "volume"])  # noqa: E501
+		from datetime import datetime
+		asof = datetime.utcnow().strftime("%Y-%m-%d")
+		row = {
+			"ticker": ticker,
+			"date": asof,
+			"open": float(close),
+			"high": float(close),
+			"low": float(close),
+			"close": float(close),
+			"volume": float(q.get("volume") or 0),
+		}
+		return pd.DataFrame([row])
 
 
 def get_providers() -> List[PriceProvider]:
