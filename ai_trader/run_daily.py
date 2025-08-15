@@ -3,6 +3,7 @@ import pandas as pd
 from .config import CONFIG
 from .storage import init_db, get_conn, upsert_decision
 from .data_collect import collect_prices, collect_global_indices, collect_sentiment_from_texts, collect_sentiment_from_pdf
+from .news import collect_perplexity_news
 from .selector import select_best_strategy
 from .execution import notify_signal
 
@@ -31,6 +32,8 @@ def main() -> None:
 		"Markets rally as inflation cools",
 		"Investors cautious amid global uncertainty",
 	])
+	# Optional: Perplexity news -> sentiment
+	collect_perplexity_news(topic="Indian stock market", count=10)
 	# Example: if you have a PDF of a report/newsletter, ingest it too
 	# collect_sentiment_from_pdf("/workspace/sample_report.pdf")
 

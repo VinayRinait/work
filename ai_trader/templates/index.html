@@ -19,7 +19,7 @@
 			<h1>AI Trader Dashboard</h1>
 			<p>Signals, strategy evaluations, and swing-trade suggestions.</p>
 		</header>
-		<main>
+		<main class="with-sidebar">
 			<section>
 				<div class="section-head">
 					<h2>Quick Analyze</h2>
@@ -112,6 +112,17 @@
 					</tbody>
 				</table>
 			</section>
+			<aside class="sidebar">
+				<h3>Market News</h3>
+				<ul class="news-list">
+					{% for n in news %}
+					<li>
+						<div class="muted">{{ n['asof'] }} · {{ n['source'] }}</div>
+						<div>{{ n['headline'] }}</div>
+					</li>
+					{% endfor %}
+				</ul>
+			</aside>
 		</main>
 		<footer>
 			<p>Paper mode. No live orders are placed.</p>

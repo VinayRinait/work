@@ -18,6 +18,7 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 @app.route("/")
 def index():
 	suggestions = []
+	recent_news = []
 	with get_db_conn() as conn:
 		decisions = conn.execute(
 			"""
@@ -32,7 +33,12 @@ def index():
 			ORDER BY asof DESC LIMIT 200
 			"""
 		).fetchall()
-		# Generate up to 5 recommendations from default tickers
+		recent_news = conn.execute(
+			"""
+			SELECT asof, headline, score, source FROM sentiment
+			ORDER BY asof DESC LIMIT 15
+			"""
+		).fetchall()
 		for t in (CONFIG.default_tickers or [])[:5]:
 			try:
 				res = analyze_ticker(t)
@@ -40,7 +46,7 @@ def index():
 					suggestions.append(res)
 			except Exception:
 				continue
-	return render_template("index.html", decisions=decisions, evals=latest_evals, suggestions=suggestions)
+	return render_template("index.html", decisions=decisions, evals=latest_evals, suggestions=suggestions, news=recent_news)
 
 
 @app.route("/analyze")
@@ -53,6 +59,11 @@ def analyze():
 		except Exception as e:
 			res = {"ticker": t, "error": str(e)}
 	return render_template("analyze.html", result=res)
+
+
+@app.route("/about")
+def about():
+	return render_template("about.html")
 
 
 @app.route("/static/<path:path>")

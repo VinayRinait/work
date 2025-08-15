@@ -25,17 +25,35 @@
 				{% if result.error %}
 				<p style="color:#f59f85">Error: {{ result.error }}</p>
 				{% else %}
-				<table>
-					<tr><th>Action</th><td>{{ result.action }}</td></tr>
-					<tr><th>Strategy</th><td>{{ result.strategy }}</td></tr>
-					<tr><th>Confidence</th><td>{{ '%.1f'|format(result.confidence) }}%</td></tr>
-					<tr><th>Reason</th><td>{{ result.reason }}</td></tr>
-					<tr><th>Close</th><td>{{ '%.2f'|format(result.snapshot.close) }}</td></tr>
-					<tr><th>SMA 200</th><td>{{ '%.2f'|format(result.snapshot.sma_200) }}</td></tr>
-					<tr><th>RSI</th><td>{{ '%.2f'|format(result.snapshot.rsi) }}</td></tr>
-					<tr><th>MACD</th><td>{{ '%.2f'|format(result.snapshot.macd) }}</td></tr>
-					<tr><th>MACD Signal</th><td>{{ '%.2f'|format(result.snapshot.macd_signal) }}</td></tr>
-				</table>
+				<div class="tabs">
+					<input type="radio" id="tab-summary" name="tabs" checked>
+					<label for="tab-summary">Summary</label>
+					<input type="radio" id="tab-strategies" name="tabs">
+					<label for="tab-strategies">Strategies</label>
+					<div class="tab-content" id="content-summary">
+						<table>
+							<tr><th>Action</th><td>{{ result.action }}</td></tr>
+							<tr><th>Strategy</th><td>{{ result.strategy }}</td></tr>
+							<tr><th>Confidence</th><td>{{ '%.1f'|format(result.confidence) }}%</td></tr>
+							<tr><th>Reason</th><td>{{ result.reason }}</td></tr>
+							<tr><th>Close</th><td>{{ '%.2f'|format(result.snapshot.close) }}</td></tr>
+							<tr><th>SMA 200</th><td>{{ '%.2f'|format(result.snapshot.sma_200) }}</td></tr>
+							<tr><th>RSI</th><td>{{ '%.2f'|format(result.snapshot.rsi) }}</td></tr>
+							<tr><th>MACD</th><td>{{ '%.2f'|format(result.snapshot.macd) }}</td></tr>
+							<tr><th>MACD Signal</th><td>{{ '%.2f'|format(result.snapshot.macd_signal) }}</td></tr>
+						</table>
+					</div>
+					<div class="tab-content" id="content-strategies">
+						<p>Strategy selection is based on recent backtests. Current winner: <strong>{{ result.strategy }}</strong>.</p>
+						<ul>
+							<li>EMA Trend: Trend-following using moving averages</li>
+							<li>SMA Crossover: Golden/Death cross style</li>
+							<li>RSI Mean Reversion: Oversold/overbought fades</li>
+							<li>Donchian Breakout: Breakouts of 20-day channel</li>
+							<li>MACD Trend: MACD vs signal momentum</li>
+						</ul>
+					</div>
+				</div>
 				{% endif %}
 			</section>
 			{% endif %}
