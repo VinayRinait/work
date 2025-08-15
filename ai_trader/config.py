@@ -15,7 +15,7 @@ def _get_list(env_name: str, default: str) -> List[str]:
 @dataclass
 class Config:
     trading_mode: str = os.getenv("TRADING_MODE", "paper").lower()
-    db_path: str = os.getenv("DB_PATH", "/workspace/trader.db")
+    db_path: str = os.getenv("DB_PATH", "trader.db")
     default_tickers: List[str] | None = None
     perplexity_api_key: str | None = os.getenv("PERPLEXITY_API_KEY")
 
