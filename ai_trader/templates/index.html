@@ -56,7 +56,7 @@
 					{% for s in suggestions %}
 					<a class="card" href="/analyze?ticker={{ s.ticker }}">
 						<div class="card-title">
-							<span class="ticker">{{ s.ticker }}</span>
+							<div class="left"><img src="/static/stock.svg" alt="" class="avatar" /><span class="ticker">{{ s.ticker }}</span></div>
 							<span class="badge {{ s.action|lower }}">{{ s.action }}</span>
 						</div>
 						<div class="card-body">
@@ -109,28 +109,30 @@
 
 			<section>
 				<h2>Recent Strategy Evaluations</h2>
-				<table>
-					<thead>
-						<tr>
-							<th>As Of</th>
-							<th>Ticker</th>
-							<th>Strategy</th>
-							<th>Return %</th>
-							<th>Win Rate %</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for r in evals %}
-						<tr>
-							<td>{{ r["asof"] }}</td>
-							<td><a href="/analyze?ticker={{ r['ticker'] }}">{{ r["ticker"] }}</a></td>
-							<td>{{ r["strategy"] }}</td>
-							<td>{{ '%.2f'|format(r["return_pct"]) }}</td>
-							<td>{{ '%.2f'|format(r["win_rate"]) }}</td>
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
+				<div class="table-scroll">
+					<table>
+						<thead>
+							<tr>
+								<th>As Of</th>
+								<th>Ticker</th>
+								<th>Strategy</th>
+								<th>Return %</th>
+								<th>Win Rate %</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for r in evals %}
+							<tr>
+								<td>{{ r["asof"] }}</td>
+								<td><a href="/analyze?ticker={{ r['ticker'] }}">{{ r["ticker"] }}</a></td>
+								<td>{{ r["strategy"] }}</td>
+								<td>{{ '%.2f'|format(r["return_pct"]) }}</td>
+								<td>{{ '%.2f'|format(r["win_rate"]) }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
 			</section>
 			<aside class="sidebar">
 				<h3>Market News</h3>

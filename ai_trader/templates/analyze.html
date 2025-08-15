@@ -21,7 +21,7 @@
 			</section>
 			{% if result %}
 			<section>
-				<h2>Result for {{ result.ticker if result.ticker else '' }}</h2>
+				<h2><img src="/static/stock.svg" alt="" class="avatar" /> Result for {{ result.ticker if result.ticker else '' }}</h2>
 				{% if result.error %}
 				<p style="color:#f59f85">Error: {{ result.error }}</p>
 				{% else %}
