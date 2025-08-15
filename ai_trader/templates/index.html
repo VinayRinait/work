@@ -13,7 +13,12 @@
 		</header>
 		<main>
 			<section>
-				<h2>Latest Signals</h2>
+				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+					<h2>Latest Signals</h2>
+					<div>
+						<a href="/analyze" style="padding:10px 14px;border-radius:8px;border:1px solid #1f2b55;background:#2b4ee8;color:#fff;text-decoration:none">Analyze a ticker</a>
+					</div>
+				</div>
 				<table>
 					<thead>
 						<tr>
@@ -36,6 +41,31 @@
 							<td>{{ '%.2f'|format(d["entry"]) if d["entry"] else '' }}</td>
 							<td>{{ '%.2f'|format(d["stop"]) if d["stop"] else '' }}</td>
 							<td>{{ '%.2f'|format(d["target"]) if d["target"] else '' }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</section>
+			<section>
+				<h2>Suggestions (Swing)</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>Ticker</th>
+							<th>Action</th>
+							<th>Strategy</th>
+							<th>Confidence</th>
+							<th>Reason</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for s in suggestions %}
+						<tr>
+							<td>{{ s.ticker }}</td>
+							<td>{{ s.action }}</td>
+							<td>{{ s.strategy }}</td>
+							<td>{{ '%.1f'|format(s.confidence) }}%</td>
+							<td>{{ s.reason }}</td>
 						</tr>
 						{% endfor %}
 					</tbody>

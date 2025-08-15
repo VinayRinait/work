@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Analyze Ticker</title>
+		<link rel="stylesheet" href="/static/styles.css" />
+	</head>
+	<body>
+		<header>
+			<h1>Analyze Ticker</h1>
+			<p>Enter a symbol (e.g., RELIANCE.NS) to get a swing recommendation.</p>
+		</header>
+		<main>
+			<section>
+				<form method="get" action="/analyze">
+					<input type="text" name="ticker" placeholder="Ticker (e.g., RELIANCE.NS)" style="padding:10px;border-radius:8px;border:1px solid #1f2b55;background:#0e162d;color:#e8ecf1;width:260px" />
+					<button type="submit" style="padding:10px 16px;border-radius:8px;border:1px solid #1f2b55;background:#2b4ee8;color:#fff">Analyze</button>
+					<a href="/" style="margin-left:10px">Back</a>
+				</form>
+			</section>
+			{% if result %}
+			<section>
+				<h2>Result for {{ result.ticker if result.ticker else '' }}</h2>
+				{% if result.error %}
+				<p style="color:#f59f85">Error: {{ result.error }}</p>
+				{% else %}
+				<table>
+					<tr><th>Action</th><td>{{ result.action }}</td></tr>
+					<tr><th>Strategy</th><td>{{ result.strategy }}</td></tr>
+					<tr><th>Confidence</th><td>{{ '%.1f'|format(result.confidence) }}%</td></tr>
+					<tr><th>Reason</th><td>{{ result.reason }}</td></tr>
+					<tr><th>Close</th><td>{{ '%.2f'|format(result.snapshot.close) }}</td></tr>
+					<tr><th>SMA 200</th><td>{{ '%.2f'|format(result.snapshot.sma_200) }}</td></tr>
+					<tr><th>RSI</th><td>{{ '%.2f'|format(result.snapshot.rsi) }}</td></tr>
+					<tr><th>MACD</th><td>{{ '%.2f'|format(result.snapshot.macd) }}</td></tr>
+					<tr><th>MACD Signal</th><td>{{ '%.2f'|format(result.snapshot.macd_signal) }}</td></tr>
+				</table>
+				{% endif %}
+			</section>
+			{% endif %}
+		</main>
+	</body>
+</html>

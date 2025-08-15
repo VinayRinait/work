@@ -1,8 +1,9 @@
 from __future__ import annotations
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, request
 import sqlite3
 from .config import CONFIG
 import os
+from .services import analyze_ticker
 
 
 def get_db_conn():
@@ -16,6 +17,7 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 
 @app.route("/")
 def index():
+	suggestions = []
 	with get_db_conn() as conn:
 		decisions = conn.execute(
 			"""
@@ -30,7 +32,27 @@ def index():
 			ORDER BY asof DESC LIMIT 200
 			"""
 		).fetchall()
-	return render_template("index.html", decisions=decisions, evals=latest_evals)
+		# Generate up to 5 recommendations from default tickers
+		for t in (CONFIG.default_tickers or [])[:5]:
+			try:
+				res = analyze_ticker(t)
+				if "error" not in res:
+					suggestions.append(res)
+			except Exception:
+				continue
+	return render_template("index.html", decisions=decisions, evals=latest_evals, suggestions=suggestions)
+
+
+@app.route("/analyze")
+def analyze():
+	t = request.args.get("ticker", "").strip()
+	res = None
+	if t:
+		try:
+			res = analyze_ticker(t)
+		except Exception as e:
+			res = {"ticker": t, "error": str(e)}
+	return render_template("analyze.html", result=res)
 
 
 @app.route("/static/<path:path>")
