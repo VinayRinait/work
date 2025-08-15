@@ -30,6 +30,8 @@
 					<label for="tab-summary">Summary</label>
 					<input type="radio" id="tab-strategies" name="tabs">
 					<label for="tab-strategies">Strategies</label>
+					<input type="radio" id="tab-patterns" name="tabs">
+					<label for="tab-patterns">Patterns</label>
 					<div class="tab-content" id="content-summary">
 						<table>
 							<tr><th>Action</th><td>{{ result.action }}</td></tr>
@@ -52,6 +54,14 @@
 							<li>Donchian Breakout: Breakouts of 20-day channel</li>
 							<li>MACD Trend: MACD vs signal momentum</li>
 						</ul>
+					</div>
+					<div class="tab-content" id="content-patterns">
+						<table>
+							<tr><th>Breakout</th><td>{{ result.snapshot.breakout }}</td></tr>
+							<tr><th>Hammer</th><td>{{ result.snapshot.pat_hammer }}</td></tr>
+							<tr><th>Bullish Engulfing</th><td>{{ result.snapshot.pat_bull_engulf }}</td></tr>
+							<tr><th>Bearish Engulfing</th><td>{{ result.snapshot.pat_bear_engulf }}</td></tr>
+						</table>
 					</div>
 				</div>
 				{% endif %}

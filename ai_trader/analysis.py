@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 import pandas as pd
 import numpy as np
 
@@ -24,10 +24,36 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
 	loss = (-delta.where(delta < 0, 0.0)).rolling(14).mean()
 	rs = gain / (loss.replace(0, np.nan))
 	data["rsi"] = 100 - (100 / (1 + rs))
-	# Donchian breakout levels
+	# Donchian
 	data["donchian_high_20"] = data["high"].rolling(20).max()
 	data["donchian_low_20"] = data["low"].rolling(20).min()
+	# Resistance breakout (recent swing highs)
+	data["resistance_20"] = data["high"].rolling(20).max()
+	data["breakout"] = (data["close"] > data["resistance_20"]).astype(int)
+	# Candle patterns
+	patt = detect_candle_patterns(data)
+	for k, v in patt.items():
+		data[k] = v
 	return data
+
+
+def detect_candle_patterns(data: pd.DataFrame) -> Dict[str, pd.Series]:
+	open_ = data.get("open", pd.Series(index=data.index, dtype=float)).astype(float)
+	high = data.get("high", pd.Series(index=data.index, dtype=float)).astype(float)
+	low = data.get("low", pd.Series(index=data.index, dtype=float)).astype(float)
+	close = data.get("close", pd.Series(index=data.index, dtype=float)).astype(float)
+	body = (close - open_)
+	rng = (high - low).replace(0, np.nan)
+	upper_shadow = (high - close).where(body >= 0, high - open_)
+	lower_shadow = (open_ - low).where(body >= 0, close - low)
+	# Hammer: small body, long lower shadow
+	hammer = ((body.abs() <= 0.3 * rng) & (lower_shadow >= 2 * body.abs())).astype(int)
+	# Engulfing: bullish if today's body engulfs yesterday's and is positive
+	prev_open = open_.shift(1)
+	prev_close = close.shift(1)
+	bull_engulf = ((close > open_) & (prev_close < prev_open) & (close >= prev_open) & (open_ <= prev_close)).astype(int)
+	bear_engulf = ((close < open_) & (prev_close > prev_open) & (close <= prev_open) & (open_ >= prev_close)).astype(int)
+	return {"pat_hammer": hammer.fillna(0), "pat_bull_engulf": bull_engulf.fillna(0), "pat_bear_engulf": bear_engulf.fillna(0)}
 
 
 def recommend_action(strategy_key: str, data: pd.DataFrame) -> Tuple[str, str, Dict[str, Any], float]:
@@ -38,9 +64,12 @@ def recommend_action(strategy_key: str, data: pd.DataFrame) -> Tuple[str, str, D
 	macd = float(latest.get("macd", np.nan))
 	macd_sig = float(latest.get("macd_signal", np.nan))
 	break_high = float(latest.get("donchian_high_20", np.nan))
-	break_low = float(latest.get("donchian_low_20", np.nan))
+	breakout = int(latest.get("breakout", 0))
+	pat_hammer = int(latest.get("pat_hammer", 0))
+	pat_bull = int(latest.get("pat_bull_engulf", 0))
+	pat_bear = int(latest.get("pat_bear_engulf", 0))
 	action = "HOLD"
-	reason = []
+	reason: List[str] = []
 	confidence = 50.0
 
 	is_uptrend = not np.isnan(sma200) and close > sma200
@@ -62,14 +91,10 @@ def recommend_action(strategy_key: str, data: pd.DataFrame) -> Tuple[str, str, D
 			action = "HOLD"
 			reason.append("Trend/oscillator not aligned")
 	elif strategy_key == "donchian":
-		if is_uptrend and close >= break_high:
+		if is_uptrend and (close >= break_high or breakout == 1):
 			action = "BUY"
-			reason.append("Breakout above 20-day high in uptrend")
-			confidence += 10
-		elif (not is_uptrend) and close <= break_low:
-			action = "SELL"
-			reason.append("Breakdown below 20-day low in downtrend")
-			confidence += 5
+			reason.append("Resistance breakout in uptrend")
+			confidence += 12
 		else:
 			action = "HOLD"
 			reason.append("No valid breakout setup")
@@ -86,7 +111,14 @@ def recommend_action(strategy_key: str, data: pd.DataFrame) -> Tuple[str, str, D
 			action = "HOLD"
 			reason.append("RSI not at extreme levels")
 
-	# Bound confidence
+	# Candles boost
+	if action == "BUY" and (pat_hammer == 1 or pat_bull == 1):
+		reason.append("Bullish candle pattern (hammer/engulfing)")
+		confidence += 5
+	if action == "SELL" and pat_bear == 1:
+		reason.append("Bearish engulfing pattern")
+		confidence += 5
+
 	confidence = max(0.0, min(95.0, confidence))
 	return action, "; ".join(reasons := reason) if reason else "", {
 		"close": close,
@@ -95,5 +127,8 @@ def recommend_action(strategy_key: str, data: pd.DataFrame) -> Tuple[str, str, D
 		"macd": macd,
 		"macd_signal": macd_sig,
 		"donchian_high_20": break_high,
-		"donchian_low_20": break_low,
+		"breakout": breakout,
+		"pat_hammer": pat_hammer,
+		"pat_bull_engulf": pat_bull,
+		"pat_bear_engulf": pat_bear,
 	}, confidence
