@@ -14,7 +14,7 @@ class PriceProvider(Protocol):
 @dataclass
 class YFinanceProvider:
 	def fetch_daily_ohlc(self, ticker: str, days: int) -> pd.DataFrame:
-		df = yf.download(ticker, period=f"{days}d", interval="1d", progress=False)
+		df = yf.download(ticker, period=f"{days}d", interval="1d", progress=False, auto_adjust=False)
 		if df.empty:
 			return df
 		df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
@@ -73,21 +73,30 @@ def search_symbol_yahoo(query: str, count: int = 5) -> List[dict]:
 
 
 def resolve_symbol(query: str) -> Optional[str]:
-	# If user already passed a likely symbol, try it first
-	q = query.strip().upper()
+	# Normalize
+	q = (query or "").strip()
+	if not q:
+		return None
+	# If typed a symbol w/ suffix
 	if "." in q:
-		return q
-	# Prefer NSE symbols
+		return q.upper()
+	# Try full query first
 	quotes = search_symbol_yahoo(q)
+	# If failed, try without common stopwords and join
+	if not quotes:
+		stop = {"of", "the", "ltd", "limited", "company", "bank"}
+		parts = [p for p in q.split() if p.lower() not in stop]
+		alt = " ".join(parts) if parts else q
+		quotes = search_symbol_yahoo(alt)
+	# Prefer NSE
 	for item in quotes:
 		symbol = item.get("symbol") or ""
 		exch = (item.get("exchDisp") or item.get("exchange") or "").upper()
 		if symbol.endswith(".NS") or exch.startswith("NS") or exch == "NSE":
 			return symbol if symbol.endswith(".NS") else f"{symbol}.NS"
-	# Fallback to first result
 	if quotes:
 		sym = quotes[0].get("symbol") or ""
-		if sym and not sym.endswith(".NS") and (quotes[0].get("exchDisp","")) == "NSE":
+		if sym and not sym.endswith(".NS"):
 			return f"{sym}.NS"
 		return sym or None
 	return None
