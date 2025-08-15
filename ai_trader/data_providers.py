@@ -79,8 +79,16 @@ def fetch_with_fallback(ticker: str, days: int) -> pd.DataFrame:
 def search_symbol_yahoo(query: str, count: int = 5) -> List[dict]:
 	try:
 		resp = requests.get(
-			"https://query1.finance.yahoo.com/v1/finance/search",
-			params={"q": query, "quotesCount": count, "newsCount": 0},
+			"https://query2.finance.yahoo.com/v1/finance/search",
+			params={
+				"q": query,
+				"quotesCount": count,
+				"newsCount": 0,
+				"listsCount": 0,
+				"enableFuzzyQuery": True,
+				"region": "IN",
+				"lang": "en-IN",
+			},
 			timeout=10,
 		)
 		resp.raise_for_status()
