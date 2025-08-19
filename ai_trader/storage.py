@@ -78,6 +78,34 @@ def init_db() -> None:
 			)
 			"""
 		)
+		# --- Trade Planner ---
+		c.execute(
+			"""
+			CREATE TABLE IF NOT EXISTS trade_plans (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				created_at TEXT,
+				ticker TEXT,
+				horizon TEXT,
+				entry_date TEXT,
+				entry REAL,
+				stop REAL,
+				target REAL,
+				status TEXT,
+				strategy TEXT,
+				action TEXT,
+				reason TEXT,
+				confidence REAL,
+				sentiment REAL,
+				rationale TEXT,
+				risk_reward REAL,
+				activated_at TEXT,
+				closed_at TEXT,
+				outcome TEXT,
+				pnl_pct REAL,
+				ttm_days INTEGER
+			)
+			"""
+		)
 
 
 def upsert_price_bars(rows: Iterable[Tuple[Any, ...]]) -> None:
@@ -157,3 +185,74 @@ def upsert_strategy_evals(rows: Iterable[Tuple[Any, ...]]) -> None:
 			""",
 			list(rows),
 		)
+
+# --- Planner helpers ---
+
+def insert_trade_plan(
+	created_at: str,
+	ticker: str,
+	horizon: str,
+	entry_date: str,
+	entry: float,
+	stop: float,
+	target: float,
+	status: str,
+	strategy: str,
+	action: str,
+	reason: str,
+	confidence: float,
+	sentiment: float | None,
+	rationale: str,
+	risk_reward: float,
+) -> int:
+	with get_conn() as conn:
+		cur = conn.execute(
+			"""
+			INSERT INTO trade_plans
+			(created_at, ticker, horizon, entry_date, entry, stop, target, status, strategy, action, reason, confidence, sentiment, rationale, risk_reward)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""",
+			(created_at, ticker, horizon, entry_date, entry, stop, target, status, strategy, action, reason, confidence, sentiment, rationale, risk_reward),
+		)
+		return int(cur.lastrowid)
+
+def update_trade_plan_status(
+	plan_id: int,
+	status: str,
+	closed_at: str | None = None,
+	outcome: str | None = None,
+	pnl_pct: float | None = None,
+	ttm_days: int | None = None,
+) -> None:
+	with get_conn() as conn:
+		conn.execute(
+			"""
+			UPDATE trade_plans
+			SET status = ?, closed_at = COALESCE(?, closed_at), outcome = COALESCE(?, outcome),
+			    pnl_pct = COALESCE(?, pnl_pct), ttm_days = COALESCE(?, ttm_days)
+			WHERE id = ?
+			""",
+			(status, closed_at, outcome, pnl_pct, ttm_days, plan_id),
+		)
+
+def fetch_trade_plans(limit: int = 500) -> list[dict]:
+	with get_conn() as conn:
+		conn.row_factory = sqlite3.Row
+		rows = conn.execute(
+			"""
+			SELECT * FROM trade_plans
+			ORDER BY created_at DESC, id DESC
+			LIMIT ?
+			""",
+			(limit,),
+		).fetchall()
+		return [dict(r) for r in rows]
+
+def get_trade_plan(plan_id: int) -> dict | None:
+	with get_conn() as conn:
+		conn.row_factory = sqlite3.Row
+		row = conn.execute(
+			"SELECT * FROM trade_plans WHERE id = ?",
+			(plan_id,),
+		).fetchone()
+		return dict(row) if row else None

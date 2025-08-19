@@ -4,6 +4,7 @@ import sqlite3
 from .config import CONFIG
 import os
 from .services import analyze_ticker
+import json
 
 
 def get_db_conn():
@@ -107,6 +108,51 @@ def analyze():
 @app.route("/about")
 def about():
 	return render_template("about.html")
+
+
+@app.route("/planner")
+def planner_dashboard():
+	with get_db_conn() as conn:
+		rows = conn.execute(
+			"""
+			SELECT * FROM trade_plans
+			ORDER BY created_at DESC, id DESC
+			LIMIT 500
+			"""
+		).fetchall()
+	plans = [dict(r) for r in rows]
+	# group by horizon then status
+	grouped = {}
+	for p in plans:
+		h = p["horizon"]
+		st = p["status"]
+		grouped.setdefault(h, {}).setdefault(st, []).append(p)
+	return render_template("planner.html", grouped=grouped)
+
+
+@app.route("/plan/<int:plan_id>")
+def plan_detail(plan_id: int):
+	with get_db_conn() as conn:
+		row = conn.execute("SELECT * FROM trade_plans WHERE id=?", (plan_id,)).fetchone()
+		if not row:
+			return render_template("plan_detail.html", plan=None)
+		plan = dict(row)
+		# load recent closes for sparkline
+		ticker = plan["ticker"]
+		prices = conn.execute(
+			"""
+			SELECT date, close FROM price_bars
+			WHERE ticker=? ORDER BY date DESC LIMIT 100
+			""",
+			(ticker,),
+		).fetchall()
+		series = [float(r["close"]) for r in reversed(prices)]
+		rationale = {}
+		try:
+			rationale = json.loads(plan.get("rationale") or "{}")
+		except Exception:
+			rationale = {}
+	return render_template("plan_detail.html", plan=plan, series=series, rationale=rationale)
 
 
 @app.route("/static/<path:path>")

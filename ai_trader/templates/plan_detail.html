@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Plan Detail</title>
+		<link rel="stylesheet" href="/static/styles.css" />
+	</head>
+	<body>
+		<nav class="topbar">
+			<div class="brand">AI Trader</div>
+			<div class="nav-links">
+				<a href="/">Home</a>
+				<a href="/planner">Planner</a>
+			</div>
+		</nav>
+		<main>
+			{% if not plan %}
+			<section><h2>Plan not found</h2></section>
+			{% else %}
+			<section>
+				<h2><img src="/static/stock.svg" alt="" class="avatar" /> {{ plan.ticker }} · {{ plan.horizon }}</h2>
+				<div class="tabs">
+					<input type="radio" id="tab-overview" name="tabs" checked>
+					<label for="tab-overview">Overview</label>
+					<input type="radio" id="tab-why" name="tabs">
+					<label for="tab-why">Why</label>
+					<input type="radio" id="tab-chart" name="tabs">
+					<label for="tab-chart">Chart</label>
+					<div class="tab-content" id="content-overview">
+						<table>
+							<tr><th>Status</th><td>{{ plan.status }}</td></tr>
+							<tr><th>Action</th><td><span class="badge {{ plan.action|lower }}">{{ plan.action }}</span></td></tr>
+							<tr><th>Strategy</th><td>{{ plan.strategy }}</td></tr>
+							<tr><th>Entry Date</th><td>{{ plan.entry_date }}</td></tr>
+							<tr><th>Entry</th><td>{{ '%.2f'|format(plan.entry) }}</td></tr>
+							<tr><th>Target</th><td>{{ '%.2f'|format(plan.target) }}</td></tr>
+							<tr><th>Stop</th><td>{{ '%.2f'|format(plan.stop) }}</td></tr>
+							<tr><th>RR</th><td>{{ '%.2f'|format(plan.risk_reward or 0) }}</td></tr>
+							<tr><th>Confidence</th><td>{{ '%.1f'|format(plan.confidence or 0) }}%</td></tr>
+							<tr><th>Sentiment</th><td>{{ '%.2f'|format(plan.sentiment) if plan.sentiment is not none else '—' }}</td></tr>
+							<tr><th>Outcome</th><td>{{ plan.outcome or '—' }} · PnL {{ '%.2f'|format(plan.pnl_pct) if plan.pnl_pct is not none else '—' }}%</td></tr>
+						</table>
+					</div>
+					<div class="tab-content" id="content-why">
+						<p><strong>Reason:</strong> {{ plan.reason }}</p>
+						<p><strong>Indicators:</strong></p>
+						<table>
+							<tr><th>Close</th><td>{{ '%.2f'|format(rationale.snapshot.close) if rationale.snapshot else '' }}</td></tr>
+							<tr><th>SMA200</th><td>{{ '%.2f'|format(rationale.snapshot.sma_200) if rationale.snapshot else '' }}</td></tr>
+							<tr><th>RSI</th><td>{{ '%.2f'|format(rationale.snapshot.rsi) if rationale.snapshot else '' }}</td></tr>
+							<tr><th>MACD</th><td>{{ '%.2f'|format(rationale.snapshot.macd) if rationale.snapshot else '' }}</td></tr>
+							<tr><th>MACD Signal</th><td>{{ '%.2f'|format(rationale.snapshot.macd_signal) if rationale.snapshot else '' }}</td></tr>
+							<tr><th>Breakout</th><td>{{ rationale.snapshot.breakout if rationale.snapshot else '' }}</td></tr>
+							<tr><th>Patterns</th><td>Hammer {{ rationale.snapshot.pat_hammer if rationale.snapshot else '' }}, BullEng {{ rationale.snapshot.pat_bull_engulf if rationale.snapshot else '' }}, BearEng {{ rationale.snapshot.pat_bear_engulf if rationale.snapshot else '' }}</td></tr>
+						</table>
+						<p class="muted">Horizon days: {{ rationale.horizon_days if rationale.horizon_days else '' }}</p>
+					</div>
+					<div class="tab-content" id="content-chart">
+						<canvas id="spark" width="600" height="160" data-series="{{ series|join(',') }}"></canvas>
+					</div>
+				</div>
+			</section>
+			{% endif %}
+		</main>
+		<script src="/static/app.js"></script>
+	</body>
+</html>

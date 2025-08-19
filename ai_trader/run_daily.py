@@ -6,6 +6,7 @@ from .data_collect import collect_prices, collect_global_indices, collect_sentim
 from .news import collect_perplexity_news
 from .selector import select_best_strategy
 from .execution import notify_signal
+from .planner import generate_daily_plans, evaluate_open_plans
 
 
 def load_ticker_df(ticker: str) -> pd.DataFrame:
@@ -26,7 +27,9 @@ def featurize_market() -> dict:
 
 def main() -> None:
 	init_db()
-	collect_prices(CONFIG.default_tickers, days=365)
+	# Collect for both default_tickers (UI suggestions) and planner_tickers (universe)
+	universe = list(dict.fromkeys((CONFIG.planner_tickers or []) + (CONFIG.default_tickers or []))) or (CONFIG.default_tickers or [])
+	collect_prices(universe, days=365)
 	collect_global_indices(days=7)
 	collect_sentiment_from_texts([
 		"Markets rally as inflation cools",
@@ -53,6 +56,10 @@ def main() -> None:
 		target = None
 		upsert_decision(asof, ticker, best.strategy_name, action, entry, stop, target, meta=None)
 		notify_signal(ticker, best.strategy_name, action, entry, stop, target)
+
+	# --- Planner: generate new plans and evaluate open ones ---
+	generate_daily_plans(CONFIG.planner_tickers or CONFIG.default_tickers)
+	evaluate_open_plans()
 
 
 if __name__ == "__main__":

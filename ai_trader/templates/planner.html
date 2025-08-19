@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Trade Planner</title>
+		<link rel="stylesheet" href="/static/styles.css" />
+	</head>
+	<body>
+		<nav class="topbar">
+			<div class="brand">AI Trader</div>
+			<div class="nav-links">
+				<a href="/">Home</a>
+				<a href="/analyze">Analyze</a>
+				<a href="/planner">Planner</a>
+			</div>
+		</nav>
+		<header>
+			<h1>Trade Planner</h1>
+			<p>Plans grouped by horizon and status.</p>
+		</header>
+		<main>
+			{% for horizon, by_status in grouped.items() %}
+			<section>
+				<h2>Horizon {{ horizon }}</h2>
+				<div class="card-grid">
+					{% for status, items in by_status.items() %}
+					<div class="card">
+						<div class="card-title">
+							<div class="left"><span class="ticker">{{ status }}</span></div>
+						</div>
+						<div class="card-body">
+							{% for p in items[:10] %}
+							<div class="row">
+								<span><a href="/plan/{{ p.id }}">{{ p.ticker }}</a></span>
+								<span class="value"><span class="badge {{ p.action|lower }}">{{ p.action }}</span> RR {{ '%.2f'|format(p.risk_reward or 0) }}</span>
+							</div>
+							<div class="muted">@ {{ '%.2f'|format(p.entry) }} · TP {{ '%.2f'|format(p.target) }} · SL {{ '%.2f'|format(p.stop) }} · {{ p.created_at }}</div>
+							{% endfor %}
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+			</section>
+			{% endfor %}
+		</main>
+	</body>
+</html>
